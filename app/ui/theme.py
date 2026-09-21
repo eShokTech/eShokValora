@@ -1,17 +1,19 @@
 from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QApplication
 
-BG = "#F5F5F7"
+BG = "#EEF8F3"
 SURFACE = "#FFFFFF"
-SURFACE_SOFT = "#F0F0F3"
-TEXT = "#25252B"
-MUTED = "#777781"
-BORDER = "#E4E4E8"
-ACCENT = "#7657D9"
-ACCENT_SOFT = "#EEE9FF"
-SUCCESS = "#2E9B67"
-WARNING = "#B87922"
-DANGER = "#C95656"
+SURFACE_SOFT = "#E2F1EA"
+TEXT = "#17231D"
+MUTED = "#617168"
+BORDER = "#C6DED2"
+ACCENT = "#35B982"
+ACCENT_DARK = "#177A55"
+ACCENT_SOFT = "#D9F2E6"
+BLACK = "#101713"
+SUCCESS = "#23845C"
+WARNING = "#9A6A21"
+DANGER = "#B64B4B"
 
 def apply_theme(app: QApplication) -> None:
     app.setStyle("Fusion")
