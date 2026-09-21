@@ -30,11 +30,8 @@ class MatteGlassFrame(QFrame):
         self.setObjectName("MatteGlassAccent" if accent else "MatteGlass")
         border = ACCENT_DARK if accent else BORDER
         self.setStyleSheet(
-            f"QFrame#{self.objectName()} {{"
-            f"background:rgba(255,255,255,238);"
-            f"border:1px solid {border};"
-            f"border-radius:20px;"
-            f"}}"
+            f"QFrame#{self.objectName()} {{background:rgba(255,255,255,238); "
+            f"border:1px solid {border}; border-radius:20px;}}"
         )
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(22)
@@ -81,12 +78,12 @@ class MatteSelector(QComboBox):
         self.addItems(list(items))
         self.setStyleSheet(
             f"QComboBox {{background:{SURFACE}; color:{TEXT}; border:1px solid {BORDER}; "
-            f"border-radius:12px; padding:0 13px; font-size:13px;}} "
+            f"border-radius:21px; padding:0 15px; font-size:13px;}} "
             f"QComboBox:hover {{border:1px solid {ACCENT};}} "
             f"QComboBox:focus {{border:1px solid {ACCENT_DARK};}} "
-            f"QComboBox::drop-down {{width:30px; border:0;}} "
+            f"QComboBox::drop-down {{width:32px; border:0;}} "
             f"QComboBox QAbstractItemView {{background:{SURFACE}; color:{TEXT}; "
-            f"border:1px solid {BORDER}; selection-background-color:{ACCENT_SOFT}; "
+            f"border:1px solid {BORDER}; border-radius:12px; selection-background-color:{ACCENT_SOFT}; "
             f"selection-color:{ACCENT_DARK}; padding:5px; outline:0;}}"
         )
 
@@ -155,11 +152,7 @@ class PrimaryButton(AnimatedButton):
 class StatusPill(QLabel):
     def __init__(self, text, tone="neutral", parent=None):
         super().__init__(text, parent)
-        colors = {
-            "success": (SUCCESS, SURFACE),
-            "warning": (WARNING, SURFACE),
-            "neutral": (MUTED, SURFACE),
-        }
+        colors = {"success": (SUCCESS, SURFACE), "warning": (WARNING, SURFACE), "neutral": (MUTED, SURFACE)}
         fg, bg = colors.get(tone, colors["neutral"])
         border = ACCENT if tone == "success" else BORDER
         self.setStyleSheet(
