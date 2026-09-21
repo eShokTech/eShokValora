@@ -5,7 +5,17 @@ from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QMainWi
 
 from app.data.database import Database
 from app.ui.theme import BG, BORDER, MUTED, SURFACE, TEXT, ACCENT, ACCENT_SOFT, apply_theme
-from app.ui.widgets import MatteCard, MatteInput, MoneyValue, NavButton, PrimaryButton, SectionTitle, FieldLabel, StatusPill
+from app.ui.widgets import (
+    MatteCard,
+    MatteInput,
+    MatteSelector,
+    MoneyValue,
+    NavButton,
+    PrimaryButton,
+    SectionTitle,
+    FieldLabel,
+    StatusPill,
+)
 
 
 class ValoraWindow(QMainWindow):
@@ -28,9 +38,12 @@ class ValoraWindow(QMainWindow):
 
     def _header(self):
         bar = QFrame()
-        bar.setStyleSheet(f"background:{SURFACE}; border:1px solid {BORDER}; border-radius:18px;")
+        bar.setStyleSheet(
+            f"background:{SURFACE}; border:1px solid {BORDER}; border-radius:18px;"
+        )
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(18, 10, 18, 10)
+
         brand_box = QVBoxLayout()
         brand_box.setSpacing(0)
         brand = QLabel("eShok Valora")
@@ -40,13 +53,18 @@ class ValoraWindow(QMainWindow):
         brand_box.addWidget(brand)
         brand_box.addWidget(sub)
         layout.addLayout(brand_box)
+
         layout.addSpacing(24)
-        for text, active in [("Inicio", True), ("Valorar", False), ("Historial", False), ("Catálogo", False)]:
+        for text, active in [
+            ("Inicio", True),
+            ("Valorar", False),
+            ("Historial", False),
+            ("Catálogo", False),
+        ]:
             layout.addWidget(NavButton(text, active))
+
         layout.addStretch()
-        search = MatteInput("Buscar equipo...")
-        search.setFixedWidth(220)
-        layout.addWidget(search)
+
         settings = NavButton("⚙")
         settings.setFixedWidth(42)
         layout.addWidget(settings)
@@ -57,6 +75,7 @@ class ValoraWindow(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         page = QWidget()
         page.setStyleSheet("background:transparent;")
         layout = QVBoxLayout(page)
@@ -67,7 +86,9 @@ class ValoraWindow(QMainWindow):
         intro.setSpacing(3)
         title = QLabel("¿Cuánto puedes pagar por este equipo?")
         title.setStyleSheet(f"color:{TEXT}; font-size:27px; font-weight:700; border:0;")
-        subtitle = QLabel("Valora el mercado usado, la reparación y el riesgo para proteger tu margen.")
+        subtitle = QLabel(
+            "Valora el mercado usado, la reparación y el riesgo para proteger tu margen."
+        )
         subtitle.setStyleSheet(f"color:{MUTED}; font-size:12px; border:0;")
         intro.addWidget(title)
         intro.addWidget(subtitle)
@@ -79,10 +100,13 @@ class ValoraWindow(QMainWindow):
         columns.addWidget(self._result_card(), 1)
         layout.addLayout(columns)
 
-        note = QLabel("La valuación no dice cuánto vale el equipo. Dice cuánto puedes pagar sin destruir tu margen.")
+        note = QLabel(
+            "La valuación no dice cuánto vale el equipo. Dice cuánto puedes pagar sin destruir tu margen."
+        )
         note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         note.setStyleSheet(f"color:{MUTED}; font-size:11px; padding:10px; border:0;")
         layout.addWidget(note)
+
         scroll.setWidget(page)
         return scroll
 
@@ -91,8 +115,11 @@ class ValoraWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(22, 22, 22, 22)
         layout.setSpacing(12)
+
         layout.addWidget(SectionTitle("Equipo", "Identificación del dispositivo"))
-        layout.addWidget(MatteInput("Escribe modelo, por ejemplo: Galaxy S22 Ultra"))
+
+        # ÚNICO buscador de toda la interfaz.
+        layout.addWidget(MatteInput("Buscar modelo, por ejemplo: Galaxy S22 Ultra"))
 
         for pair in [
             (("Modelo", "Galaxy S22 Ultra"), ("Variante", "SM-S908U")),
@@ -104,8 +131,20 @@ class ValoraWindow(QMainWindow):
                 col = QVBoxLayout()
                 col.setSpacing(5)
                 col.addWidget(FieldLabel(label))
-                field = MatteInput()
-                field.setText(value)
+
+                if label == "Variante":
+                    field = MatteSelector(["SM-S908U", "SM-S908B"])
+                    field.setCurrentText(value)
+                elif label == "RAM":
+                    field = MatteSelector(["8 GB", "12 GB"])
+                    field.setCurrentText(value)
+                elif label == "Almacenamiento":
+                    field = MatteSelector(["128 GB", "256 GB", "512 GB"])
+                    field.setCurrentText(value)
+                else:
+                    field = MatteInput()
+                    field.setText(value)
+
                 col.addWidget(field)
                 row.addLayout(col)
             layout.addLayout(row)
@@ -121,18 +160,23 @@ class ValoraWindow(QMainWindow):
         condition = MatteInput("Ej. pantalla rota, equipo funcional")
         condition.setText("Pantalla rota")
         layout.addWidget(condition)
+
         layout.addWidget(PrimaryButton("Valorar equipo"))
         return card
 
     def _result_card(self):
         card = MatteCard()
-        card.setStyleSheet(f"QFrame {{ background:{SURFACE}; border:1px solid {ACCENT_SOFT}; border-radius:20px; }}")
+        card.setStyleSheet(
+            f"QFrame {{ background:rgba(255,255,255,238); border:1px solid {ACCENT_SOFT}; border-radius:20px; }}"
+        )
         layout = QVBoxLayout(card)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(10)
 
         eyebrow = QLabel("PUEDES PAGAR HASTA")
-        eyebrow.setStyleSheet(f"color:{ACCENT}; font-size:10px; font-weight:700; border:0;")
+        eyebrow.setStyleSheet(
+            f"color:{ACCENT}; font-size:10px; font-weight:700; border:0;"
+        )
         layout.addWidget(eyebrow)
         layout.addWidget(MoneyValue("$2,100 MXN"))
 
@@ -140,7 +184,9 @@ class ValoraWindow(QMainWindow):
         suggested.addWidget(QLabel("Oferta sugerida"))
         suggested.addStretch()
         offer = QLabel("$1,800")
-        offer.setStyleSheet(f"color:{ACCENT}; font-size:16px; font-weight:700; border:0;")
+        offer.setStyleSheet(
+            f"color:{ACCENT}; font-size:16px; font-weight:700; border:0;"
+        )
         suggested.addWidget(offer)
         layout.addLayout(suggested)
 
@@ -149,19 +195,28 @@ class ValoraWindow(QMainWindow):
         line.setStyleSheet(f"color:{BORDER};")
         layout.addWidget(line)
 
-        for label, value in [("Mercado usado", "$5,100"), ("Reparación", "− $1,700"), ("Reserva de riesgo", "− $300"), ("Utilidad deseada", "− $1,000")]:
+        for label, value in [
+            ("Mercado usado", "$5,100"),
+            ("Reparación", "− $1,700"),
+            ("Reserva de riesgo", "− $300"),
+            ("Utilidad deseada", "− $1,000"),
+        ]:
             row = QHBoxLayout()
             left = QLabel(label)
             left.setStyleSheet(f"color:{MUTED}; font-size:11px; border:0;")
             right = QLabel(value)
-            right.setStyleSheet(f"color:{TEXT}; font-size:12px; font-weight:650; border:0;")
+            right.setStyleSheet(
+                f"color:{TEXT}; font-size:12px; font-weight:650; border:0;"
+            )
             row.addWidget(left)
             row.addStretch()
             row.addWidget(right)
             layout.addLayout(row)
 
         layout.addStretch()
-        confidence = QLabel("8 observaciones recientes  ·  Marketplace  ·  confianza alta")
+        confidence = QLabel(
+            "8 observaciones recientes  ·  Marketplace  ·  confianza alta"
+        )
         confidence.setStyleSheet(f"color:{MUTED}; font-size:10px; border:0;")
         layout.addWidget(confidence)
         return card
