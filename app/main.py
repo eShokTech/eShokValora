@@ -1,7 +1,9 @@
 import sys
 
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
+
+from app.data.database import Database
 
 
 class ValoraWindow(QMainWindow):
@@ -13,16 +15,15 @@ class ValoraWindow(QMainWindow):
 
         title = QLabel("eShok VALORA")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
         self.setCentralWidget(title)
 
 
 def main():
-    app = QApplication(sys.argv)
+    Database().initialize()
 
+    app = QApplication(sys.argv)
     window = ValoraWindow()
     window.show()
-
     sys.exit(app.exec())
 
 
