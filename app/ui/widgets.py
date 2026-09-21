@@ -1,4 +1,4 @@
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtProperty
+from PySide6.QtCore import QEasingCurve, Property, QPropertyAnimation, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QComboBox,
@@ -17,7 +17,6 @@ from app.ui.theme import (
     BORDER,
     MUTED,
     SURFACE,
-    SURFACE_SOFT,
     TEXT,
     SUCCESS,
     WARNING,
@@ -108,7 +107,7 @@ class AnimatedButton(QPushButton):
         self._lift = value
         self.setContentsMargins(0, max(0, int(2 - value)), 0, max(0, int(2 + value)))
 
-    lift = pyqtProperty(int, get_lift, set_lift)
+    lift = Property(int, get_lift, set_lift)
 
     def enterEvent(self, event):
         self._animation.stop()
