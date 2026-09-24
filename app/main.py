@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QDoubleValidator, QIntValidator
-from PySide6.QtWidgets import QApplication, QCompleter, QDialog, QDialogButtonBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QCompleter, QDialog, QDialogButtonBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 from app.core.catalog import DeviceCatalog, DeviceModel, DeviceVariant
 from app.core.engine import ValuationRequest, value_device
 from app.core.identification import identity_from_variant
@@ -96,61 +96,144 @@ class ValoraWindow(QMainWindow):
         outer.setContentsMargins(28, 22, 28, 26)
         outer.setSpacing(18)
         outer.addWidget(self._header())
-        outer.addWidget(self._content(), 1)
+
+        self.pages = QStackedWidget()
+        self.pages.setFrameShape(QFrame.Shape.NoFrame)
+        outer.addWidget(self.pages, 1)
+
+        self.info_page = self._info_page()
+        self.valuation_page = self._valuation_page()
+        self.pages.addWidget(self.info_page)
+        self.pages.addWidget(self.valuation_page)
+        self.pages.setCurrentIndex(0)
 
     def _header(self):
         bar = QFrame()
-        bar.setStyleSheet(f"background:{SURFACE}; border:1px solid {BORDER}; border-radius:18px;")
+        bar.setStyleSheet(
+            f"background:{SURFACE}; border:1px solid {BORDER}; border-radius:18px;"
+        )
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(18, 10, 18, 10)
+
         brand_box = QVBoxLayout()
         brand_box.setSpacing(0)
         brand = QLabel("eShok Valora")
-        brand.setStyleSheet(f"color:{TEXT}; font-size:17px; font-weight:700; border:0;")
+        brand.setStyleSheet(
+            f"color:{TEXT}; font-size:17px; font-weight:700; border:0;"
+        )
         sub = QLabel("Compra inteligente")
         sub.setStyleSheet(f"color:{MUTED}; font-size:10px; border:0;")
         brand_box.addWidget(brand)
         brand_box.addWidget(sub)
         layout.addLayout(brand_box)
-        layout.addSpacing(24)
-        for text, active in [("Inicio", True), ("Valorar", False), ("Historial", False), ("Catálogo", False)]:
-            layout.addWidget(NavButton(text, active))
         layout.addStretch()
-        settings = NavButton("⚙")
-        settings.setFixedWidth(42)
-        layout.addWidget(settings)
+
+        self.back_button = NavButton("← Información")
+        self.back_button.clicked.connect(lambda: self.pages.setCurrentIndex(0))
+        self.back_button.hide()
+        layout.addWidget(self.back_button)
+
+        self.header_state = QLabel("1  Información  ·  2  Valoración")
+        self.header_state.setStyleSheet(
+            f"color:{MUTED}; font-size:10px; border:0;"
+        )
+        layout.addWidget(self.header_state)
+
+        self.pages_current_hook = self.pages.currentChanged.connect(
+            self._page_changed
+        )
         return bar
 
-    def _content(self):
+    def _page_changed(self, index):
+        valuation = index == 1
+        self.back_button.setVisible(valuation)
+        self.header_state.setText(
+            "1  Información  ·  2  Valoración"
+            if not valuation
+            else "1  Información  ✓  ·  2  Valoración"
+        )
+
+    def _scroll_page(self, widget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        scroll.setWidget(widget)
+        return scroll
+
+    def _info_page(self):
         page = QWidget()
-        page.setStyleSheet("background:transparent;")
         layout = QVBoxLayout(page)
         layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(16)
-        intro = QVBoxLayout()
-        intro.setSpacing(3)
-        title = QLabel("¿Cuánto puedes pagar por este equipo?")
-        title.setStyleSheet(f"color:{TEXT}; font-size:27px; font-weight:700; border:0;")
-        subtitle = QLabel("Valora el mercado usado, la reparación y el riesgo para proteger tu margen.")
-        subtitle.setStyleSheet(f"color:{MUTED}; font-size:12px; border:0;")
-        intro.addWidget(title)
-        intro.addWidget(subtitle)
-        layout.addLayout(intro)
+        layout.setSpacing(14)
+
+        title = QLabel("Información del equipo")
+        title.setStyleSheet(
+            f"color:{TEXT}; font-size:27px; font-weight:700; border:0;"
+        )
+        subtitle = QLabel(
+            "Captura lo que sabes del equipo. Valora se encargará de validar "
+            "la información y convertir lo que falta en riesgo económico."
+        )
+        subtitle.setWordWrap(True)
+        subtitle.setStyleSheet(
+            f"color:{MUTED}; font-size:12px; border:0;"
+        )
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+
+        layout.addWidget(self._device_card())
+
+        footer = QHBoxLayout()
+        footer.addStretch()
+        self.value_button = PrimaryButton("Valorar equipo  →")
+        self.value_button.clicked.connect(self._value)
+        footer.addWidget(self.value_button)
+        layout.addLayout(footer)
+
+        return self._scroll_page(page)
+
+    def _valuation_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(14)
+
+        title = QLabel("Valoración")
+        title.setStyleSheet(
+            f"color:{TEXT}; font-size:27px; font-weight:700; border:0;"
+        )
+        subtitle = QLabel(
+            "Valora el mercado de segunda vida, los costos, el riesgo y tu "
+            "margen para calcular cuánto puedes ofrecer."
+        )
+        subtitle.setWordWrap(True)
+        subtitle.setStyleSheet(
+            f"color:{MUTED}; font-size:12px; border:0;"
+        )
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+
         columns = QHBoxLayout()
         columns.setSpacing(18)
-        columns.addWidget(self._device_card(), 1)
+        columns.addWidget(self._valuation_inputs_card(), 1)
         columns.addWidget(self._result_card(), 1)
         layout.addLayout(columns)
-        note = QLabel("La valuación no dice cuánto vale el equipo. Dice cuánto puedes pagar sin destruir tu margen.")
+
+        note = QLabel(
+            "Valora no determina cuánto vale el equipo. Determina cuánto "
+            "puedes pagar por él sin destruir tu margen."
+        )
         note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        note.setStyleSheet(f"color:{MUTED}; font-size:11px; padding:8px; border:0;")
+        note.setWordWrap(True)
+        note.setStyleSheet(
+            f"color:{MUTED}; font-size:11px; padding:8px; border:0;"
+        )
         layout.addWidget(note)
-        scroll.setWidget(page)
-        return scroll
+
+        return self._scroll_page(page)
 
     def _device_card(self):
         card = MatteCard()
@@ -214,39 +297,20 @@ class ValoraWindow(QMainWindow):
         imei_row.addLayout(checks, 1)
         layout.addLayout(imei_row)
 
-        form = QGridLayout()
-        form.setHorizontalSpacing(10)
-        form.setVerticalSpacing(7)
-        self.condition = MatteSelector(["Funciona", "Detalles menores", "Dañado", "Para piezas", "Reacondicionado"])
-        self.market_type = MatteSelector(["Segundo uso", "Venta rápida", "Reacondicionado", "Nuevo"])
-        self.repair = self._money_input("1700")
-        self.selling = self._money_input("0")
-        self.other = self._money_input("0")
-        self.desired_profit = self._money_input("1000")
-        self.margin = self._percent_input()
-        self.buffer = self._money_input("300")
-        self.faults = MatteInput()
-        self.faults.setText("1")
-        self.faults.setValidator(QIntValidator(0, 99, self))
-        self.unknown_faults = MatteCheckBox("Hay fallas/datos funcionales desconocidos")
-        self.complexity = MatteSelector(["Baja", "Media", "Alta"])
-        self.complexity.setCurrentIndex(1)
-        fields = [("Condición", self.condition), ("Mercado", self.market_type), ("Reparación estimada", self.repair), ("Costo de venta", self.selling), ("Otros costos", self.other), ("Utilidad deseada", self.desired_profit), ("Margen deseado %", self.margin), ("Colchón de oferta", self.buffer), ("Fallas conocidas", self.faults), ("Complejidad", self.complexity)]
-        for i, (label, widget) in enumerate(fields):
-            r, c = divmod(i, 2)
-            form.addWidget(FieldLabel(label), r * 2, c)
-            form.addWidget(widget, r * 2 + 1, c)
-        form.addWidget(self.unknown_faults, 10, 0, 1, 2)
-        layout.addLayout(form)
-        actions = QHBoxLayout()
+        condition_row = QHBoxLayout()
+        condition_col = QVBoxLayout()
+        condition_col.addWidget(FieldLabel("Condición del equipo"))
+        self.condition = MatteSelector(
+            ["Funciona", "Detalles menores", "Dañado", "Para piezas", "Reacondicionado"]
+        )
+        condition_col.addWidget(self.condition)
+        condition_row.addLayout(condition_col, 1)
+
         observe = NavButton("+ Mercado")
         observe.clicked.connect(self._add_observation)
-        actions.addWidget(observe)
-        actions.addStretch()
-        self.value_button = PrimaryButton("Valorar equipo")
-        self.value_button.clicked.connect(self._value)
-        actions.addWidget(self.value_button)
-        layout.addLayout(actions)
+        condition_row.addWidget(observe, 0, Qt.AlignmentFlag.AlignBottom)
+        layout.addLayout(condition_row)
+
         return card
 
     def _result_card(self):
@@ -292,6 +356,60 @@ class ValoraWindow(QMainWindow):
         self.notes.setWordWrap(True)
         self.notes.setStyleSheet(f"color:{MUTED}; font-size:10px; border:0;")
         layout.addWidget(self.notes)
+        return card
+
+    def _valuation_inputs_card(self):
+        card = MatteCard()
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(22, 22, 22, 22)
+        layout.setSpacing(10)
+        layout.addWidget(
+            SectionTitle(
+                "Cálculo",
+                "Parámetros que Valora usa para convertir el análisis en una oferta."
+            )
+        )
+
+        form = QGridLayout()
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(7)
+
+        self.market_type = MatteSelector(
+            ["Segundo uso", "Venta rápida", "Reacondicionado", "Nuevo"]
+        )
+        self.repair = self._money_input("1700")
+        self.selling = self._money_input("0")
+        self.other = self._money_input("0")
+        self.desired_profit = self._money_input("1000")
+        self.margin = self._percent_input()
+        self.buffer = self._money_input("300")
+        self.faults = MatteInput()
+        self.faults.setText("1")
+        self.faults.setValidator(QIntValidator(0, 99, self))
+        self.unknown_faults = MatteCheckBox(
+            "Hay fallas/datos funcionales desconocidos"
+        )
+        self.complexity = MatteSelector(["Baja", "Media", "Alta"])
+        self.complexity.setCurrentIndex(1)
+
+        fields = [
+            ("Mercado", self.market_type),
+            ("Reparación estimada", self.repair),
+            ("Costo de venta", self.selling),
+            ("Otros costos", self.other),
+            ("Utilidad deseada", self.desired_profit),
+            ("Margen deseado %", self.margin),
+            ("Colchón de oferta", self.buffer),
+            ("Fallas conocidas", self.faults),
+            ("Complejidad", self.complexity),
+        ]
+        for i, (label, widget) in enumerate(fields):
+            r, c = divmod(i, 2)
+            form.addWidget(FieldLabel(label), r * 2, c)
+            form.addWidget(widget, r * 2 + 1, c)
+
+        form.addWidget(self.unknown_faults, 10, 0, 1, 2)
+        layout.addLayout(form)
         return card
 
     @staticmethod
@@ -387,37 +505,113 @@ class ValoraWindow(QMainWindow):
 
     def _value(self):
         if not self.selected_model:
-            QMessageBox.warning(self, "Falta el equipo", "Usa el único buscador para identificar el modelo.")
+            QMessageBox.warning(
+                self,
+                "Falta el equipo",
+                "Usa el buscador para identificar el modelo."
+            )
             return
+
         observations = self._observations()
-        conditions = [Condition.WORKING, Condition.MINOR_DETAILS, Condition.DAMAGED, Condition.FOR_PARTS, Condition.REFURBISHED]
-        markets = [MarketType.SECOND_LIFE, MarketType.QUICK_SALE, MarketType.REFURBISHED_SALE, MarketType.NEW]
+        conditions = [
+            Condition.WORKING,
+            Condition.MINOR_DETAILS,
+            Condition.DAMAGED,
+            Condition.FOR_PARTS,
+            Condition.REFURBISHED,
+        ]
+        markets = [
+            MarketType.SECOND_LIFE,
+            MarketType.QUICK_SALE,
+            MarketType.REFURBISHED_SALE,
+            MarketType.NEW,
+        ]
+
         if not observations:
             self.eyebrow.setText("SIN DATOS DE MERCADO")
             self.money_value.setText("$0 MXN")
             self.offer.setText("$0")
-            self.market_info.setText("No hay observaciones guardadas. Agrega datos reales con «+ Mercado» para que Valora pueda calcular.")
+            self.market_info.setText(
+                "No hay observaciones guardadas. Agrega datos reales con «+ Mercado» "
+                "para que Valora pueda calcular."
+            )
+            self.notes.setText(
+                "Primero alimenta el mercado con una o más observaciones reales."
+            )
+            self.pages.setCurrentIndex(1)
             return
+
         try:
-            result = value_device(ValuationRequest(observations=tuple(observations), condition=conditions[self.condition.currentIndex()], market_type=markets[self.market_type.currentIndex()], repair_cost=float(self.repair.text() or 0), selling_cost=float(self.selling.text() or 0), other_cost=float(self.other.text() or 0), desired_profit=float(self.desired_profit.text() or 0), desired_margin_percent=float(self.margin.text()) if self.margin.text().strip() else None, known_faults=int(self.faults.text() or 0), unknown_faults=self.unknown_faults.isChecked(), repair_complexity=[0.2, 0.6, 0.9][self.complexity.currentIndex()], recommendation_buffer=float(self.buffer.text() or 0), identity=self._identity()))
+            result = value_device(
+                ValuationRequest(
+                    observations=tuple(observations),
+                    condition=conditions[self.condition.currentIndex()],
+                    market_type=markets[self.market_type.currentIndex()],
+                    repair_cost=float(self.repair.text() or 0),
+                    selling_cost=float(self.selling.text() or 0),
+                    other_cost=float(self.other.text() or 0),
+                    desired_profit=float(self.desired_profit.text() or 0),
+                    desired_margin_percent=(
+                        float(self.margin.text())
+                        if self.margin.text().strip()
+                        else None
+                    ),
+                    known_faults=int(self.faults.text() or 0),
+                    unknown_faults=self.unknown_faults.isChecked(),
+                    repair_complexity=[0.2, 0.6, 0.9][
+                        self.complexity.currentIndex()
+                    ],
+                    recommendation_buffer=float(self.buffer.text() or 0),
+                    identity=self._identity(),
+                )
+            )
         except ValueError as exc:
             self.eyebrow.setText("NO SE PUDO VALORAR")
             self.money_value.setText("$0 MXN")
             self.offer.setText("$0")
             self.market_info.setText(str(exc))
+            self.pages.setCurrentIndex(1)
             return
+
         self.last_result = result
         self.eyebrow.setText("PUEDES PAGAR HASTA")
-        self.money_value.setText(money(result.valuation.maximum_purchase_price))
+        self.money_value.setText(
+            money(result.valuation.maximum_purchase_price)
+        )
         self.offer.setText(money(result.valuation.recommended_offer))
         self.breakdown["market"].setText(money(result.market.price))
-        self.breakdown["repair"].setText("− " + money(float(self.repair.text() or 0)))
-        self.breakdown["risk"].setText("− " + money(result.risk.reserve + result.uncertainty.reserve))
-        self.breakdown["profit"].setText("− " + money(result.valuation.expected_profit_at_max))
-        self.breakdown["costs"].setText("− " + money(float(self.selling.text() or 0) + float(self.other.text() or 0)))
-        self.market_info.setText(f"{result.market.sample_count} observaciones · rango {money(result.market.low)}–{money(result.market.high)} · confianza {result.market.confidence * 100:.0f}%")
-        notes = list(result.risk.reasons) + list(result.uncertainty.reasons) + list(result.valuation.notes)
-        self.notes.setText(" · ".join(notes) if notes else "Escenario viable con los datos disponibles.")
+        self.breakdown["repair"].setText(
+            "− " + money(float(self.repair.text() or 0))
+        )
+        self.breakdown["risk"].setText(
+            "− " + money(result.risk.reserve + result.uncertainty.reserve)
+        )
+        self.breakdown["profit"].setText(
+            "− " + money(result.valuation.expected_profit_at_max)
+        )
+        self.breakdown["costs"].setText(
+            "− "
+            + money(
+                float(self.selling.text() or 0)
+                + float(self.other.text() or 0)
+            )
+        )
+        self.market_info.setText(
+            f"{result.market.sample_count} observaciones · "
+            f"rango {money(result.market.low)}–{money(result.market.high)} · "
+            f"confianza {result.market.confidence * 100:.0f}%"
+        )
+        notes = (
+            list(result.risk.reasons)
+            + list(result.uncertainty.reasons)
+            + list(result.valuation.notes)
+        )
+        self.notes.setText(
+            " · ".join(notes)
+            if notes
+            else "Escenario viable con los datos disponibles."
+        )
+        self.pages.setCurrentIndex(1)
 
     def _add_observation(self):
         if not self.selected_model:
