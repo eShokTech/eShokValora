@@ -105,6 +105,7 @@ class ValoraWindow(QMainWindow):
         self.valuation_page = self._valuation_page()
         self.pages.addWidget(self.info_page)
         self.pages.addWidget(self.valuation_page)
+        self.pages.currentChanged.connect(self._page_changed)
         self.pages.setCurrentIndex(0)
 
     def _header(self):
@@ -139,9 +140,6 @@ class ValoraWindow(QMainWindow):
         )
         layout.addWidget(self.header_state)
 
-        self.pages_current_hook = self.pages.currentChanged.connect(
-            self._page_changed
-        )
         return bar
 
     def _page_changed(self, index):
