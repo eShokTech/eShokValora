@@ -1,5 +1,5 @@
-from PySide6.QtCore import QEasingCurve, Property, QPropertyAnimation, Qt, QRectF
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtCore import QEasingCurve, Property, QPropertyAnimation, Qt, QRectF, QTimer
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen, QRegion
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -197,6 +197,15 @@ class MatteSelector(QComboBox):
 
         painter.end()
 
+    def _round_popup(self, popup):
+        radius = 14
+        rect = popup.rect()
+        if rect.width() <= 0 or rect.height() <= 0:
+            return
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(rect), radius, radius)
+        popup.setMask(QRegion(path.toFillPolygon().toPolygon()))
+
     def showPopup(self):
         super().showPopup()
         popup = self.view().window()
@@ -204,6 +213,34 @@ class MatteSelector(QComboBox):
         popup.setStyleSheet(
             "QFrame { background: transparent; border: 0; }"
         )
+        QTimer.singleShot(0, lambda: self._animate_popup(popup))
+
+    def _animate_popup(self, popup):
+        end = popup.geometry()
+        if end.width() <= 0 or end.height() <= 0:
+            return
+
+        self._round_popup(popup)
+
+        start = end
+        start.setHeight(min(8, end.height()))
+        popup.setGeometry(start)
+        self._round_popup(popup)
+
+        animation = QPropertyAnimation(popup, b"geometry", popup)
+        animation.setDuration(155)
+        animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        animation.setStartValue(start)
+        animation.setEndValue(end)
+
+        def update_mask(value):
+            rect = value
+            popup.setGeometry(rect)
+            self._round_popup(popup)
+
+        animation.valueChanged.connect(update_mask)
+        popup._valora_popup_animation = animation
+        animation.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
 
 class MatteCheckBox(QCheckBox):
