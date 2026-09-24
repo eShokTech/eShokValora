@@ -197,50 +197,25 @@ class MatteSelector(QComboBox):
 
         painter.end()
 
-    def _round_popup(self, popup):
-        radius = 14
-        rect = popup.rect()
-        if rect.width() <= 0 or rect.height() <= 0:
-            return
-        path = QPainterPath()
-        path.addRoundedRect(QRectF(rect), radius, radius)
-        popup.setMask(QRegion(path.toFillPolygon().toPolygon()))
-
     def showPopup(self):
+        # Keep Qt's native popup geometry and positioning. We only make the
+        # popup window transparent and let the QListView provide the rounded
+        # surface, avoiding the geometry jump caused by animating the window.
         super().showPopup()
         popup = self.view().window()
         popup.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        popup.setStyleSheet(
-            "QFrame { background: transparent; border: 0; }"
+        popup.setStyleSheet("QFrame { background: transparent; border: 0; }")
+        self.view().setStyleSheet(
+            f"QListView {{"
+            f"background:rgba(255,255,255,250); color:{TEXT};"
+            f"border:1px solid {BORDER}; border-radius:14px;"
+            f"padding:6px; outline:0;"
+            f"}}"
+            f"QListView::item {{min-height:34px; padding:7px 10px; border-radius:10px;}}"
+            f"QListView::item:hover {{background:{ACCENT_SOFT}; color:{ACCENT_DARK};}}"
+            f"QListView::item:selected {{background:{ACCENT_SOFT}; color:{ACCENT_DARK}; font-weight:650;}}"
         )
-        QTimer.singleShot(0, lambda: self._animate_popup(popup))
 
-    def _animate_popup(self, popup):
-        end = popup.geometry()
-        if end.width() <= 0 or end.height() <= 0:
-            return
-
-        self._round_popup(popup)
-
-        start = end
-        start.setHeight(min(8, end.height()))
-        popup.setGeometry(start)
-        self._round_popup(popup)
-
-        animation = QPropertyAnimation(popup, b"geometry", popup)
-        animation.setDuration(155)
-        animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        animation.setStartValue(start)
-        animation.setEndValue(end)
-
-        def update_mask(value):
-            rect = value
-            popup.setGeometry(rect)
-            self._round_popup(popup)
-
-        animation.valueChanged.connect(update_mask)
-        popup._valora_popup_animation = animation
-        animation.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
 
 class MatteCheckBox(QCheckBox):
