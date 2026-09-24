@@ -621,11 +621,25 @@ class MatteSelector(QWidget):
                 * self._hover_progress
             ),
         )
-        if self.hasFocus():
+        if self.hasFocus() and self._hover_progress < 0.05:
             border = QColor(ACCENT_DARK)
 
-        painter.setPen(QPen(border, 1.2))
+        # El hover conserva el selector exactamente igual en reposo y
+        # añade solamente la transición mint solicitada al pasar el mouse.
+        border_width = 1.2 + (0.8 * self._hover_progress)
+        painter.setPen(QPen(border, border_width))
         painter.drawRoundedRect(rect, 21.0, 21.0)
+
+        if self._hover_progress > 0.01:
+            highlight = QColor(ACCENT)
+            highlight.setAlpha(int(28 * self._hover_progress))
+            painter.setBrush(highlight)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(
+                rect.adjusted(1.5, 1.5, -1.5, -1.5),
+                19.5,
+                19.5,
+            )
 
         painter.setPen(QPen(QColor(TEXT), 1))
         painter.drawText(
