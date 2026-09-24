@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QDoubleValidator, QIntValidator
-from PySide6.QtWidgets import QApplication, QCheckBox, QCompleter, QDialog, QDialogButtonBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QCompleter, QDialog, QDialogButtonBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea, QVBoxLayout, QWidget
 from app.core.catalog import DeviceCatalog, DeviceModel, DeviceVariant
 from app.core.engine import ValuationRequest, value_device
 from app.core.identification import identity_from_variant
@@ -10,7 +10,7 @@ from app.core.models import Condition, MarketObservation, PriceSource
 from app.data.catalog_seed import seed_catalog
 from app.data.database import Database
 from app.ui.theme import BG, BORDER, MUTED, SURFACE, TEXT, ACCENT, ACCENT_SOFT, ACCENT_DARK, apply_theme
-from app.ui.widgets import MatteCard, MatteInput, MatteSelector, MoneyValue, NavButton, PrimaryButton, SectionTitle, FieldLabel, StatusPill
+from app.ui.widgets import MatteCard, MatteInput, MatteSelector, MatteCheckBox, MoneyValue, NavButton, PrimaryButton, SectionTitle, FieldLabel, StatusPill
 
 def money(value: float) -> str:
     return "$" + f"{value:,.0f} MXN"
@@ -57,7 +57,7 @@ class ObservationDialog(QDialog):
         row2.addLayout(city_col)
         row2.addLayout(conf_col)
         layout.addLayout(row2)
-        self.sold = QCheckBox("Venta confirmada")
+        self.sold = MatteCheckBox("Venta confirmada")
         layout.addWidget(self.sold)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
@@ -203,9 +203,9 @@ class ValoraWindow(QMainWindow):
         imei_col.addWidget(self.imei)
         imei_row.addLayout(imei_col, 2)
         checks = QVBoxLayout()
-        self.imei_verified = QCheckBox("IMEI verificado")
-        self.imei_reported = QCheckBox("IMEI reportado")
-        self.functional = QCheckBox("Prueba funcional completa")
+        self.imei_verified = MatteCheckBox("IMEI verificado")
+        self.imei_reported = MatteCheckBox("IMEI reportado")
+        self.functional = MatteCheckBox("Prueba funcional completa")
         self.imei_verified.toggled.connect(self._update_imei_status)
         self.imei_reported.toggled.connect(self._update_imei_status)
         checks.addWidget(self.imei_verified)
@@ -228,7 +228,7 @@ class ValoraWindow(QMainWindow):
         self.faults = MatteInput()
         self.faults.setText("1")
         self.faults.setValidator(QIntValidator(0, 99, self))
-        self.unknown_faults = QCheckBox("Hay fallas/datos funcionales desconocidos")
+        self.unknown_faults = MatteCheckBox("Hay fallas/datos funcionales desconocidos")
         self.complexity = MatteSelector(["Baja", "Media", "Alta"])
         self.complexity.setCurrentIndex(1)
         fields = [("Condición", self.condition), ("Mercado", self.market_type), ("Reparación estimada", self.repair), ("Costo de venta", self.selling), ("Otros costos", self.other), ("Utilidad deseada", self.desired_profit), ("Margen deseado %", self.margin), ("Colchón de oferta", self.buffer), ("Fallas conocidas", self.faults), ("Complejidad", self.complexity)]
