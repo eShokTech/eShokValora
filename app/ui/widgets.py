@@ -191,7 +191,7 @@ class MatteSelector(QComboBox):
         path.moveTo(cx - 5, cy - 2)
         path.lineTo(cx, cy + 3)
         path.lineTo(cx + 5, cy - 2)
-        painter.setPen(QPen(QColor(ACCENT_DARK), 1.7, Qt.PenStyle.SolidLine, Qt.PenCapStyle.Round, Qt.PenJoinStyle.Round))
+        painter.setPen(QPen(QColor(ACCENT_DARK), 1.7, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawPath(path)
 
